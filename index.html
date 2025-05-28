@@ -121,6 +121,9 @@
       const entry = document.createElement("div");
       entry.textContent = logText;
       log.prepend(entry);
+      if (log.children.length > 100) {
+        log.removeChild(log.lastChild);
+      }
     }
 
     function mineBTC() {
