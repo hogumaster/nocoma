@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>ㅁ비트코인 채굴 시뮬레이터ㅁ</title>
+  <title>비트코인 극한 채굴 시뮬레이터</title>
   <style>
     body {
       background: linear-gradient(to right, #111, #222);
@@ -56,21 +56,19 @@
   </style>
 </head>
 <body>
-  <h1>비트코인 채굴 시뮬레이터</h1>
+  <h1>비트코인 극한 채굴 시뮬레이터</h1>
   <h2 id="btc-count">0.00000000 BTC</h2>
 
-  <div class="section">
-    <button class="upgrade-btn" onclick="mineBTC()">⛏ 일반 채굴</button>
-    <button class="upgrade-btn" onclick="watchAd()">📺 광고 보기 (0.00002 BTC)</button>
-    <button class="upgrade-btn" onclick="buyFan()">❄ 냉각팬 구매 (0.00012 BTC)</button>
+  <button class="upgrade-btn" onclick="mineBTC()">⛏ 일반 채굴</button>
+    <button class="upgrade-btn" onclick="upgradeMinerPower()">⛏ 채굴력 업그레이드 (0.0005 BTC)</button>
+        <button class="upgrade-btn" onclick="buyFan()">❄ 냉각팬 구매 (0.00012 BTC)</button>
     <button class="upgrade-btn" onclick="buyShield()">🛡 보안 방패 구매 (0.00018 BTC)</button>
     <button class="upgrade-btn" onclick="buyHacker()">💻 해커 고용 (0.00025 BTC)</button>
   </div>
 
   <div id="descriptions">
-    ⛏ 일반 채굴: 클릭할 때마다 BTC를 소량 획득합니다.<br>
-    📺 광고 보기: 광고 1회 시청으로 BTC 소량 보상.<br>
-    ❄ 냉각팬: 채굴 효율을 증가시킵니다.<br>
+    ⛏ 일반 채굴: 클릭할 때마다 BTC를 소량 획득합니다.<br>⛏ 채굴력 업그레이드: 일반 채굴당 획득량을 늘립니다.<br>
+        ❄ 냉각팬: 채굴 효율을 증가시킵니다.<br>
     🛡 보안 방패: 정복 실패 시 손실 BTC를 최대 30%까지 줄여줍니다.<br>
     💻 해커 고용: 5초마다 자동으로 BTC 수급.<br>
     🌍 국가 정복: BTC를 사용해 세계 정복! 정복 시 보너스 효과 적용.
@@ -133,13 +131,7 @@
       updateCountries();
     }
 
-    function watchAd() {
-      const reward = 0.00002;
-      btc += reward;
-      updateDisplay(`[${new Date().toLocaleTimeString()}] 📺 광고 시청 보상: ${reward.toFixed(8)} BTC`);
-      updateCountries();
-    }
-
+    
     function buyFan() {
       const cost = 0.00012;
       if (btc >= cost) {
@@ -173,7 +165,18 @@
       }
     }
 
-    function updateCountries() {
+    function upgradeMinerPower() {
+  const cost = 0.0005;
+  if (btc >= cost) {
+    btc -= cost;
+    minerPower += 1;
+    updateDisplay(`[${new Date().toLocaleTimeString()}] ⛏ 채굴력 업그레이드! 현재 채굴력: ${minerPower}`);
+  } else {
+    updateDisplay(`[${new Date().toLocaleTimeString()}] ❌ BTC 부족 - 채굴력 업그레이드 실패`);
+  }
+}
+
+function updateCountries() {
       const list = document.getElementById("country-list");
       const bonusDiv = document.getElementById("bonuses");
       list.innerHTML = "";
