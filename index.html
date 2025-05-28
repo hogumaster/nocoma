@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>비트코인 채굴 시뮬레이터</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #111, #222);
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      padding: 50px;
+    }
+    .upgrade-btn {
+      font-size: 16px;
+      padding: 10px 20px;
+      margin: 8px;
+      cursor: pointer;
+      background: #333;
+      color: #0f0;
+      border: 1px solid #0f0;
+      border-radius: 5px;
+    }
+    .upgrade-btn:hover {
+      background-color: #0f0;
+      color: #000;
+    }
+    .section {
+      margin-top: 40px;
+    }
+    #console-log {
+      margin-top: 30px;
+      max-height: 200px;
+      overflow-y: auto;
+      border-top: 1px solid #0f0;
+      padding-top: 10px;
+      background-color: #000;
+    }
+    #world-domination ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 10px;
+    }
+    #ascii-map {
+      margin-top: 50px;
+      font-size: 8px;
+      line-height: 10px;
+      white-space: pre;
+      color: #0f0;
+    }
+    #descriptions {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>비트코인 채굴 시뮬레이터</h1>
+  <h2 id="btc-count">0.00000000 BTC</h2>
+
+  <div class="section">
+    <button class="upgrade-btn" onclick="mineBTC()">⛏ 일반 채굴</button>
+    <button class="upgrade-btn" onclick="watchAd()">📺 광고 보기 (0.00002 BTC)</button>
+    <button class="upgrade-btn" onclick="buyFan()">❄ 냉각팬 구매 (0.00012 BTC)</button>
+    <button class="upgrade-btn" onclick="buyShield()">🛡 보안 방패 구매 (0.00018 BTC)</button>
+    <button class="upgrade-btn" onclick="buyHacker()">💻 해커 고용 (0.00025 BTC)</button>
+  </div>
+
+  <div id="descriptions">
+    ⛏ 일반 채굴: 클릭할 때마다 BTC를 소량 획득합니다.<br>
+    📺 광고 보기: 광고 1회 시청으로 BTC 소량 보상.<br>
+    ❄ 냉각팬: 채굴 효율을 증가시킵니다.<br>
+    🛡 보안 방패: 정복 실패 시 손실 BTC를 최대 30%까지 줄여줍니다.<br>
+    💻 해커 고용: 5초마다 자동으로 BTC 수급.<br>
+    🌍 국가 정복: BTC를 사용해 세계 정복! 정복 시 보너스 효과 적용.
+  </div>
+
+  <div id="clock" style="font-size: 14px; color: #0f0; font-family: 'Courier New', monospace; margin-bottom: 10px;"></div>
+  <div id="console-log"></div>
+
+  <div id="world-domination">
+    <h3>🌍 세계 정복</h3>
+    <ul id="country-list"></ul>
+    <div id="bonuses" style="font-size: 12px; color: #ccc; margin-top: 10px;"></div>
+  </div>
+
+  <div id="ascii-map">
+<pre>
+           .--.
+       .-(    ).
+      (___.__)__)      ,--.
+       \  (__)  /     | oo |
+       |\______/|     |____|
+     //        \\   /      \
+    ||  WORLD   || /  BTC   \
+     \\  MAP    // |  RISE!  |
+      `--------`   \______/ 
+</pre>
+  </div>
+
+  <script>
+    let btc = 0;
+    let minerPower = 1;
+    let speedBonus = 1;
+    let fans = 0;
+    let shields = 0;
+    let hackers = 0;
+
+    const countries = [
+      { name: "🇯🇵 일본", cost: 120, unlocked: false, successRate: 0.4, bonus: () => { btc += 0.5; }, desc: "BTC 보너스 0.5 획득" },
+      { name: "🇩🇪 독일", cost: 150, unlocked: false, successRate: 0.35, bonus: () => { minerPower += 2; }, desc: "채굴력 +2" },
+      { name: "🇧🇷 브라질", cost: 180, unlocked: false, successRate: 0.3, bonus: () => { speedBonus += 1; }, desc: "채굴 속도 +100%" },
+      { name: "🇰🇷 대한민국", cost: 100, unlocked: false, successRate: 0.5, bonus: () => { minerPower += 1; }, desc: "채굴력 +1" },
+      { name: "🇺🇸 미국", cost: 130, unlocked: false, successRate: 0.45, bonus: () => { speedBonus += 0.5; }, desc: "채굴 속도 +50%" }
+    ];
+
+    function updateDisplay(logText) {
+      document.getElementById("btc-count").textContent = btc.toFixed(8) + " BTC";
+      const log = document.getElementById("console-log");
+      const entry = document.createElement("div");
+      entry.textContent = logText;
+      log.prepend(entry);
+    }
+
+    function mineBTC() {
+      const mined = (Math.random() * 0.000002 * minerPower * (1 + 0.05 * fans) * speedBonus).toFixed(8);
+      btc += parseFloat(mined);
+      updateDisplay(`[${new Date().toLocaleTimeString()}] ⛏ 채굴 성공: ${mined} BTC`);
+      updateCountries();
+    }
+
+    function watchAd() {
+      const reward = 0.00002;
+      btc += reward;
+      updateDisplay(`[${new Date().toLocaleTimeString()}] 📺 광고 시청 보상: ${reward.toFixed(8)} BTC`);
+      updateCountries();
+    }
+
+    function buyFan() {
+      const cost = 0.00012;
+      if (btc >= cost) {
+        btc -= cost;
+        fans++;
+        updateDisplay(`[${new Date().toLocaleTimeString()}] ❄ 냉각팬 구매! (총 ${fans}개)`);
+      } else {
+        updateDisplay(`[${new Date().toLocaleTimeString()}] ❌ BTC 부족 - 냉각팬 구매 실패`);
+      }
+    }
+
+    function buyShield() {
+      const cost = 0.00018;
+      if (btc >= cost) {
+        btc -= cost;
+        shields++;
+        updateDisplay(`[${new Date().toLocaleTimeString()}] 🛡 보안 방패 구매! (총 ${shields}개)`);
+      } else {
+        updateDisplay(`[${new Date().toLocaleTimeString()}] ❌ BTC 부족 - 보안 방패 구매 실패`);
+      }
+    }
+
+    function buyHacker() {
+      const cost = 0.00025;
+      if (btc >= cost) {
+        btc -= cost;
+        hackers++;
+        updateDisplay(`[${new Date().toLocaleTimeString()}] 💻 해커 고용! (총 ${hackers}명)`);
+      } else {
+        updateDisplay(`[${new Date().toLocaleTimeString()}] ❌ BTC 부족 - 해커 고용 실패`);
+      }
+    }
+
+    function updateCountries() {
+      const list = document.getElementById("country-list");
+      const bonusDiv = document.getElementById("bonuses");
+      list.innerHTML = "";
+      let bonusText = "";
+
+      countries.forEach((c) => {
+        const li = document.createElement("li");
+        li.textContent = `${c.name} - ${c.unlocked ? "✅ 정복 완료" : `🔒 ${c.cost.toFixed(3)} BTC / 성공률 ${(c.successRate * 100).toFixed(0)}%`}`;
+        if (!c.unlocked && btc >= c.cost) {
+          const btn = document.createElement("button");
+          btn.textContent = "정복!";
+          btn.onclick = () => {
+            btc -= c.cost;
+            const success = Math.random() < c.successRate;
+            if (success) {
+              c.unlocked = true;
+              updateDisplay(`[${new Date().toLocaleTimeString()}] 🌍 ${c.name} 정복 성공! 보상 적용됨. (보안 방패 적용됨)`);
+              if (c.bonus) c.bonus();
+            } else {
+              const shieldEffect = Math.min(shields * 0.05, 0.3);
+              const loss = c.cost * (1 - shieldEffect);
+              btc += c.cost - loss;
+              updateDisplay(`[${new Date().toLocaleTimeString()}] ❌ ${c.name} 정복 실패. 보안 방패로 손실 ${loss.toFixed(3)} BTC 발생`);
+            }
+            updateCountries();
+          };
+          li.appendChild(btn);
+        }
+        list.appendChild(li);
+        if (c.unlocked) bonusText += `${c.name}: ${c.desc} / `;
+      });
+      bonusDiv.textContent = bonusText ? `정복 보상: ${bonusText}` : "";
+    }
+
+    setInterval(() => {
+      const hacked = hackers * 0.000001;
+      if (hacked > 0) {
+        btc += hacked;
+        updateDisplay(`[${new Date().toLocaleTimeString()}] 💻 해커 자동 수급: ${hacked.toFixed(8)} BTC`);
+      }
+    }, 5000);
+
+    updateCountries();
+  setInterval(() => {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString();
+  document.getElementById("clock").textContent = `🕒 ${timeStr}`;
+}, 1000);
+
+</script>
+</body>
+</html>
