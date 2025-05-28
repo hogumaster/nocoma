@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>방치 강화 게임</title>
+  <style>
+    body {
+      background: #222;
+      color: #fff;
+      font-family: sans-serif;
+      margin: 0;
+    }
+    .unit {
+      position: absolute;
+      font-size: 24px;
+      cursor: grab;
+    }
+    .unit-label {
+      position: absolute;
+      top: -20px;
+      width: 100%;
+      text-align: center;
+      font-size: 14px;
+      color: yellow;
+      pointer-events: none;
+    }
+    .portal {
+      position: absolute;
+      top: 10px;
+      left: calc(50% - 12px);
+      font-size: 24px;
+      pointer-events: none;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.6; }
+    }
+    .controls {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      z-index: 1000;
+    }
+    .control-group {
+      background: #444;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    button {
+      padding: 6px 12px;
+      margin-top: 4px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+@keyframes float-up {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-30px); }
+}
+@keyframes shake {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  25% { transform: translate(-48%, -52%) rotate(3deg); }
+  50% { transform: translate(-52%, -48%) rotate(-3deg); }
+  75% { transform: translate(-48%, -50%) rotate(2deg); }
+  100% { transform: translate(-50%, -50%) rotate(0deg); }
+}
+.shake {
+  animation: shake 0.3s;
+}
+
+.unit-area {
+  width: 800px;
+  height: 320px;
+  margin: 20px auto;
+  position: relative;
+  display: flex;
+  background: #222;
+  overflow: hidden;
+  border: 2px solid #fff;
+}
+
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <div class="control-group">
+      <div>유닛 구매 레벨: <span id="unitLevel">1</span></div>
+      <button onclick="changeLevel(-1, 'unit')">-</button>
+      <button onclick="changeLevel(1, 'unit')">+</button>
+      <button onclick="requestBuyUnit()">유닛 구매</button>
+    </div>
+    <div class="control-group">
+      <div>강화 대상 레벨: <span id="upgradeLevel">1</span></div>
+      <button onclick="changeLevel(-1, 'upgrade')">-</button>
+      <button onclick="changeLevel(1, 'upgrade')">+</button>
+      <button id="upgradeButton" onclick="toggleUpgrade()">강화 시작</button>
+    </div>
+  </div>
+
+ <div class="unit-area" id="unitArea">
+    <div class="spawn-zone" style="flex: 1; position: relative; background: linear-gradient(to top, #355e27, #85c66b); background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.05) 2%, transparent 0), radial-gradient(circle at 70% 60%, rgba(255,255,255,0.07) 2%, transparent 0); background-size: 40px 40px; border-right: 6px solid white;">
+      <div style="position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #ccc;">🟢 유닛 생성 </div>
+      <div class="portal">🌀</div>
+    </div>
+    <div class="skill-zone" style="flex: 1; position: relative; background-color: #333; background-image: linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px); background-size: 20px 20px;">
+      <div id="skill-hp-bar" style="position: absolute; top: 10px; width: 100%; left: 0; height: 6px; background: linear-gradient(to right, limegreen, yellow, orange, red); border-radius: 5px; text-align: center; line-height: 6px; font-size: 9px; font-weight: bold; box-shadow: 0 0 2px rgba(255,255,255,0.2); transition: width 0.3s ease-out; z-index: 10;">스테이지 1 - HP 100 / 100</div>
+     <div id="gold" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 42px;">💰</div>
+      <div style="position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 14px; color: #ccc;">💰 손기술 </div>
+    </div>
+  </div>
+
+  <script>
+    let unitLevel = 1;
+    let upgradeLevel = 1;
+    let upgrading = false;
+
+    function changeLevel(delta, type) {
+      if (type === 'unit') {
+        unitLevel = Math.max(1, Math.min(50, unitLevel + delta));
+        document.getElementById("unitLevel").textContent = unitLevel;
+      } else {
+        upgradeLevel = Math.max(1, Math.min(50, upgradeLevel + delta));
+        document.getElementById("upgradeLevel").textContent = upgradeLevel;
+      }
+    }
+
+    function toggleUpgrade() {
+      upgrading = !upgrading;
+      const btn = document.getElementById("upgradeButton");
+      btn.style.backgroundColor = upgrading ? "#888" : "";
+    }
+
+    function requestBuyUnit() {
+      const unitArea = document.getElementById("unitArea");
+      const spawnZone = document.querySelector(".spawn-zone");
+      const currentUnits = document.querySelectorAll(".unit").length;
+      if (currentUnits >= 30) return;
+
+      const unit = document.createElement("div");
+      unit.className = "unit";
+      unit.dataset.level = unitLevel;
+      unit.innerHTML = `<div class='unit-label'>+${unitLevel}</div>🐣`;
+
+      const rect = spawnZone.getBoundingClientRect();
+      const parentRect = unitArea.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2 - parentRect.left - 12;
+      const bottomY = rect.bottom - parentRect.top - 48;
+
+      unit.style.left = `${centerX}px`;
+      unit.style.top = `${bottomY}px`;
+
+      unitArea.appendChild(unit);
+    }
+
+    document.addEventListener("mousedown", function (e) {
+      const unit = e.target.closest(".unit");
+      if (!unit) return;
+
+      const unitArea = document.getElementById("unitArea");
+      const offsetX = e.clientX - unit.getBoundingClientRect().left;
+      const offsetY = e.clientY - unit.getBoundingClientRect().top;
+
+      unit.classList.add("dragging");
+
+      function onMouseMove(e) {
+        const parentRect = unitArea.getBoundingClientRect();
+        unit.style.left = `${e.clientX - offsetX - parentRect.left}px`;
+        unit.style.top = `${e.clientY - offsetY - parentRect.top}px`;
+      }
+
+      function onMouseUp() {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        unit.classList.remove("dragging");
+      }
+
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    });
+
+    setInterval(() => {
+const goldIcon = document.getElementById("gold");
+if (goldIcon) {
+  goldIcon.classList.add("shake");
+  setTimeout(() => goldIcon.classList.remove("shake"), 300);
+}
+
+      if (!upgrading) return;
+      const spawnZone = document.querySelector(".spawn-zone");
+      const portal = document.querySelector(".portal").getBoundingClientRect();
+      const unitArea = document.getElementById("unitArea").getBoundingClientRect();
+      const units = document.querySelectorAll('.unit');
+      units.forEach(unit => {
+        const level = parseInt(unit.dataset.level);
+        if (level <= upgradeLevel) {
+          const parent = unit.parentElement;
+          if (!spawnZone.contains(unit)) return;
+          const unitBox = unit.getBoundingClientRect();
+          if (
+            unitBox.top < portal.bottom &&
+            unitBox.bottom > portal.top &&
+            unitBox.left < portal.right &&
+            unitBox.right > portal.left
+          ) {
+            const successRate = 100 - (level * 2);
+            const success = Math.random() * 100 < successRate;
+            const spawnZone = document.querySelector(".spawn-zone");
+            const spawnRect = spawnZone.getBoundingClientRect();
+            const unitArea = document.getElementById("unitArea").getBoundingClientRect();
+            const centerX = spawnRect.left + spawnRect.width / 2 - unitArea.left - 12;
+            const bottomY = spawnRect.bottom - unitArea.top - 48;
+
+            if (success && level < 50) {
+              const newUnit = document.createElement("div");
+              newUnit.className = "unit";
+              newUnit.dataset.level = level + 1;
+              newUnit.innerHTML = `<div class='unit-label'>+${level + 1}</div>🐣`;
+              newUnit.style.left = `${centerX}px`;
+              newUnit.style.top = `${bottomY}px`;
+              document.getElementById("unitArea").appendChild(newUnit);
+            }
+            unit.remove();
+          } else {
+            const currentTop = parseFloat(unit.style.top);
+            if (currentTop > 20) {
+              unit.style.top = `${currentTop - 1}px`;
+            }
+          }
+        }
+      });
+    }, 100);
+
+     setInterval(() => {
+      const skillZone = document.querySelector(".skill-zone");
+      const skillRect = skillZone.getBoundingClientRect();
+      const units = document.querySelectorAll('.unit');
+      units.forEach(unit => {
+        const unitRect = unit.getBoundingClientRect();
+        if (
+          unitRect.left > skillRect.left &&
+          unitRect.right < skillRect.right &&
+          unitRect.top > skillRect.top &&
+          unitRect.bottom < skillRect.bottom
+        ) {
+          const damage = parseInt(unit.dataset.level);
+          const bar = document.getElementById("skill-hp-bar");
+          const match = bar.textContent.match(/HP (\d+)/);
+          if (match) {
+            let currentHP = parseInt(match[1]);
+            currentHP -= damage;
+            if (currentHP < 0) currentHP = 0;
+            bar.textContent = `스테이지 1 - HP ${currentHP} / 100`;
+            bar.style.width = `${currentHP}%`;
+          }
+        }
+      });
+    }, 1000); // 공격은 1초마다 실행
+
+    // 공격 처리 + 연출
+setInterval(() => {
+  const skillZone = document.querySelector(".skill-zone");
+  const skillRect = skillZone.getBoundingClientRect();
+  const units = document.querySelectorAll('.unit');
+  const goldIcon = document.querySelector(".skill-zone div[style*='💰']");
+
+  units.forEach(unit => {
+    const unitRect = unit.getBoundingClientRect();
+    if (
+      unitRect.left > skillRect.left &&
+      unitRect.right < skillRect.right &&
+      unitRect.top > skillRect.top &&
+      unitRect.bottom < skillRect.bottom
+    ) {
+      const damage = parseInt(unit.dataset.level);
+
+      // 투사체 생성
+      const projectile = document.createElement("div");
+      projectile.textContent = "🔸";
+      projectile.style.position = "absolute";
+      projectile.style.left = `${unitRect.left + unitRect.width / 2}px`;
+      projectile.style.top = `${unitRect.top}px`;
+      projectile.style.transition = "all 0.3s linear";
+      projectile.style.zIndex = 999;
+      document.body.appendChild(projectile);
+
+      const targetX = skillRect.left + skillRect.width / 2;
+      const targetY = skillRect.top + skillRect.height / 2;
+      requestAnimationFrame(() => {
+        projectile.style.left = `${targetX}px`;
+        projectile.style.top = `${targetY}px`;
+        projectile.style.opacity = 0;
+      });
+
+      setTimeout(() => projectile.remove(), 400);
+
+      // 데미지 숫자 출력
+      const dmgText = document.createElement("div");
+      dmgText.textContent = `-${damage}`;
+      dmgText.style.position = "absolute";
+      dmgText.style.left = `${targetX}px`;
+      dmgText.style.top = `${targetY}px`;
+      dmgText.style.color = "red";
+      dmgText.style.fontWeight = "bold";
+      dmgText.style.fontSize = "16px";
+      dmgText.style.pointerEvents = "none";
+      dmgText.style.animation = "float-up 0.6s forwards";
+      document.body.appendChild(dmgText);
+      setTimeout(() => dmgText.remove(), 600);
+
+      // 금고 흔들림
+      if (goldIcon) {
+        goldIcon.classList.add("shake");
+        setTimeout(() => goldIcon.classList.remove("shake"), 300);
+      }
+
+      // 체력 차감
+      const bar = document.getElementById("skill-hp-bar");
+      const match = bar.textContent.match(/HP (\d+)/);
+      if (match) {
+        let currentHP = parseInt(match[1]);
+        currentHP -= damage;
+        if (currentHP < 0) currentHP = 0;
+        bar.textContent = `스테이지 1 - HP ${currentHP} / 100`;
+        bar.style.width = `${currentHP}%`;
+      }
+    }
+  });
+}, 1000);
+  </script>
+</body>
+</html>
