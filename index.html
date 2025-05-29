@@ -53,6 +53,20 @@
       color: #aaa;
       margin-top: 20px;
     }
+
+.ad-right {
+  position: fixed;
+  top: 100px;     /* 원하는 만큼 조정 가능 */
+  right: 0;
+  z-index: 999;
+}
+.ad-left {
+  position: fixed;
+  top: 100px;
+  left: 0;
+  z-index: 999;
+}
+    
   </style>
 </head>
 <body>
@@ -230,5 +244,28 @@
 
     updateCountries();
   </script>
+
+
+  <div class="ad-right">
+  <ins class="kakao_ad_area"
+       style="display:none;"
+       data-ad-unit="DAN-6O4Ywj6XkWQqqfZb"
+       data-ad-width="160"
+       data-ad-height="600">
+  </ins>
+</div>
+  
+<div class="ad-left">
+  <ins class="kakao_ad_area"
+       style="display:none;"
+       data-ad-unit="DAN-ppzpMffJlfBqL4P5"
+       data-ad-width="160"
+       data-ad-height="600">
+  </ins>
+</div>
+
+  
+<script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
+  
 </body>
 </html>
