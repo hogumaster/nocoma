@@ -54,6 +54,17 @@
       margin-top: 20px;
     }
 
+#ad-sidebar {
+  position: fixed;
+  top: 100px;
+  right: 10px;
+  width: 160px;
+  height: 600px;
+  z-index: 1000;
+}
+
+
+    
   
   </style>
 </head>
@@ -96,6 +107,7 @@
     ||  WORLD   || /  BTC   \
      \\  MAP    // |  RISE!  |
       `--------`   \______/ 
+  copyright 
 </pre>
   </div>
 
@@ -230,10 +242,12 @@ function updateCountries() {
 
 </script>
   
-<ins class="kakao_ad_area" style="display:none;"
-data-ad-unit = "DAN-SfSPhXE1BKrKdzYH"
-data-ad-width = "160"
-data-ad-height = "600"></ins>
+<div id="ad-sidebar">
+  <ins class="kakao_ad_area" style="display:none;"
+       data-ad-unit="DAN-SfSPhXE1BKrKdzYH"
+       data-ad-width="160"
+       data-ad-height="600"></ins>
+</div>
 <script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
   
 </body>
