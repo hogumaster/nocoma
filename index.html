@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>비트코인 극한 채굴 시뮬레이터</title>
+  <title>부자되기 시뮬레이터</title>
   <style>
     body {
       background: linear-gradient(to right, #111, #222);
@@ -14,7 +14,7 @@
     .upgrade-btn {
       font-size: 16px;
       padding: 10px 20px;
-      margin: 8px;
+      margin: 4px;
       cursor: pointer;
       background: #333;
       color: #0f0;
@@ -53,45 +53,24 @@
       color: #aaa;
       margin-top: 20px;
     }
-
-#ad-sidebar {
-  position: fixed;
-  top: 100px;
-  right: 10px;
-  width: 160px;
-  height: 600px;
-  z-index: 1000;
-}
-
-#ad-leftbar {
-  position: fixed;
-  top: 100px;
-  left: 10px;
-  width: 160px;
-  height: 600px;
-  z-index: 1000;
-
-    
-  
   </style>
 </head>
 <body>
-  <h1>비트코인 극한 채굴 시뮬레이터</h1>
-  <h2 id="btc-count">0.00000000 BTC</h2>
+  <h1>💸 부자 시뮬레이터</h1>
+  <h2 id="btc-count">$0</h2>
 
-  <button class="upgrade-btn" onclick="mineBTC()">⛏ 일반 채굴</button>
-    <button class="upgrade-btn" onclick="upgradeMinerPower()">⛏ 채굴력 업그레이드 (0.0005 BTC)</button>
-        <button class="upgrade-btn" onclick="buyFan()">❄ 냉각팬 구매 (0.00012 BTC)</button>
-    <button class="upgrade-btn" onclick="buyShield()">🛡 보안 방패 구매 (0.00018 BTC)</button>
-    <button class="upgrade-btn" onclick="buyHacker()">💻 해커 고용 (0.00025 BTC)</button>
-  </div>
+  <div id="mining-section"><button class="upgrade-btn" onclick="mineBTC()">📱 앱 수익 벌기</button></div>
+  <button class="upgrade-btn" onclick="upgradeMinerPower()" id="upgradeBtn">⛏ 수익성 업그레이드 ($10.00 USD)</button>
+  <button class="upgrade-btn" onclick="buyFan()" id="fanBtn">❄ 스마트폰 구매 ($2.40 USD)</button>
+  <button class="upgrade-btn" onclick="buyShield()" id="shieldBtn">🛡 계정 보안 구매 ($3.60 USD)</button>
+  <button class="upgrade-btn" onclick="buyHacker()" id="hackerBtn">💻 마케팅 팀 고용 ($5.00 USD)</button>
 
   <div id="descriptions">
-    ⛏ 일반 채굴: 클릭할 때마다 BTC를 소량 획득합니다.<br>⛏ 채굴력 업그레이드: 일반 채굴당 획득량을 늘립니다.<br>
-        ❄ 냉각팬: 채굴 효율을 증가시킵니다.<br>
-    🛡 보안 방패: 정복 실패 시 손실 BTC를 최대 30%까지 줄여줍니다.<br>
-    💻 해커 고용: 5초마다 자동으로 BTC 수급.<br>
-    🌍 국가 정복: BTC를 사용해 세계 정복! 정복 시 보너스 효과 적용.
+    ⛏ 앱 수익: 클릭할 때마다 USD를 소량 획득합니다.<br>⛏ 수익성 업그레이드: 앱 수익당 획득량을 늘립니다.<br>
+    ❄ 스마트폰: 앱 수익 효율을 증가시킵니다.<br>
+    🛡 계정 보안: 실패 시 손실 USD를 최대 30%까지 줄여줍니다.<br>
+    💻 마케팅 팀 고용: 5초마다 마케팅 수익 자동 획득.<br>
+    🌍 글로벌 진출: USD를 사용해 해외 진출! 성공 시 보너스 효과 적용.
   </div>
 
   <div id="clock" style="font-size: 14px; color: #0f0; font-family: 'Courier New', monospace; margin-bottom: 10px;"></div>
@@ -114,156 +93,142 @@
     ||  WORLD   || /  BTC   \
      \\  MAP    // |  RISE!  |
       `--------`   \______/ 
-  copyright 
 </pre>
   </div>
 
   <script>
-    let btc = 0;
+    let btc = 0; // 기본머니
     let minerPower = 1;
     let speedBonus = 1;
     let fans = 0;
     let shields = 0;
     let hackers = 0;
+    let upgradeCost = 10.00;
+    let fanCost = 2.40;
+    let shieldCost = 3.60;
+    let hackerCost = 5.00;
 
-    const countries = [
-      { name: "🇯🇵 일본", cost: 120, unlocked: false, successRate: 0.4, bonus: () => { btc += 0.5; }, desc: "BTC 보너스 0.5 획득" },
-      { name: "🇩🇪 독일", cost: 150, unlocked: false, successRate: 0.35, bonus: () => { minerPower += 2; }, desc: "채굴력 +2" },
-      { name: "🇧🇷 브라질", cost: 180, unlocked: false, successRate: 0.3, bonus: () => { speedBonus += 1; }, desc: "채굴 속도 +100%" },
-      { name: "🇰🇷 대한민국", cost: 100, unlocked: false, successRate: 0.5, bonus: () => { minerPower += 1; }, desc: "채굴력 +1" },
-      { name: "🇺🇸 미국", cost: 130, unlocked: false, successRate: 0.45, bonus: () => { speedBonus += 0.5; }, desc: "채굴 속도 +50%" }
-    ];
-
-    function updateDisplay(logText) {
-      document.getElementById("btc-count").textContent = btc.toFixed(8) + " BTC";
+    function updateDisplay(msg) {
       const log = document.getElementById("console-log");
-      const entry = document.createElement("div");
-      entry.textContent = logText;
-      log.prepend(entry);
-      if (log.children.length > 100) {
-        log.removeChild(log.lastChild);
-      }
+      const entry = `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+      log.innerHTML = entry + log.innerHTML;
+      if (log.children.length > 100) log.removeChild(log.children[0]);
+      document.getElementById("btc-count").textContent = `$${btc.toFixed(2)}`;
     }
 
     function mineBTC() {
-      const mined = (Math.random() * 0.000002 * minerPower * (1 + 0.05 * fans) * speedBonus).toFixed(8);
-      btc += parseFloat(mined);
-      updateDisplay(`[${new Date().toLocaleTimeString()}] ⛏ 채굴 성공: ${mined} BTC`);
-      updateCountries();
+      const earned = minerPower * speedBonus * 0.3;
+      btc += earned;
+      updateDisplay(`📱 앱 수익 발생: +$${earned.toFixed(2)}`);
     }
 
-    
+    function upgradeMinerPower() {
+      if (btc >= upgradeCost) {
+        btc -= upgradeCost;
+        minerPower++;
+        upgradeCost *= 1.25;
+        document.getElementById("upgradeBtn").innerText = `⛏ 수익성 업그레이드 ($${upgradeCost.toFixed(2)} USD)`;
+        updateDisplay("수익성이 증가했습니다.");
+      }
+    }
+
     function buyFan() {
-      const cost = 0.00012;
-      if (btc >= cost) {
-        btc -= cost;
+      if (btc >= fanCost) {
+        btc -= fanCost;
         fans++;
-        updateDisplay(`[${new Date().toLocaleTimeString()}] ❄ 냉각팬 구매! (총 ${fans}개)`);
-      } else {
-        updateDisplay(`[${new Date().toLocaleTimeString()}] ❌ BTC 부족 - 냉각팬 구매 실패`);
+        speedBonus += 0.1;
+        fanCost *= 1.25;
+        document.getElementById("fanBtn").innerText = `❄ 스마트폰 구매 ($${fanCost.toFixed(2)} USD)`;
+        updateDisplay("스마트폰을 구매해 수익 속도가 향상되었습니다.");
       }
     }
 
     function buyShield() {
-      const cost = 0.00018;
-      if (btc >= cost) {
-        btc -= cost;
+      if (btc >= shieldCost) {
+        btc -= shieldCost;
         shields++;
-        updateDisplay(`[${new Date().toLocaleTimeString()}] 🛡 보안 방패 구매! (총 ${shields}개)`);
-      } else {
-        updateDisplay(`[${new Date().toLocaleTimeString()}] ❌ BTC 부족 - 보안 방패 구매 실패`);
+        shieldCost *= 1.25;
+        document.getElementById("shieldBtn").innerText = `🛡 계정 보안 구매 ($${shieldCost.toFixed(2)} USD)`;
+        updateDisplay("계정 보안이 강화되었습니다.");
       }
     }
 
     function buyHacker() {
-      const cost = 0.00025;
-      if (btc >= cost) {
-        btc -= cost;
+      if (btc >= hackerCost) {
+        btc -= hackerCost;
         hackers++;
-        updateDisplay(`[${new Date().toLocaleTimeString()}] 💻 해커 고용! (총 ${hackers}명)`);
-      } else {
-        updateDisplay(`[${new Date().toLocaleTimeString()}] ❌ BTC 부족 - 해커 고용 실패`);
+        hackerCost *= 1.25;
+        document.getElementById("hackerBtn").innerText = `💻 마케팅 팀 고용 ($${hackerCost.toFixed(2)} USD)`;
+        updateDisplay("마케팅 팀이 자동 수익을 창출하기 시작했습니다.");
       }
     }
 
-    function upgradeMinerPower() {
-  const cost = 0.0005;
-  if (btc >= cost) {
-    btc -= cost;
-    minerPower += 1;
-    updateDisplay(`[${new Date().toLocaleTimeString()}] ⛏ 채굴력 업그레이드! 현재 채굴력: ${minerPower}`);
-  } else {
-    updateDisplay(`[${new Date().toLocaleTimeString()}] ❌ BTC 부족 - 채굴력 업그레이드 실패`);
-  }
-}
+    const countries = [
+      { name: "🇯🇵 일본", cost: 2000, unlocked: false, successRate: 0.4, bonus: () => { btc += 10; }, desc: "USD 보너스 $10 획득" },
+      { name: "🇩🇪 독일", cost: 30000, unlocked: false, successRate: 0.35, bonus: () => { minerPower += 2; }, desc: "수익성 +2" },
+      { name: "🇧🇷 브라질", cost: 40000, unlocked: false, successRate: 0.3, bonus: () => { speedBonus += 1; }, desc: "수익 속도 +100%" },
+      { name: "🇰🇷 대한민국", cost: 25000, unlocked: false, successRate: 0.5, bonus: () => { minerPower += 1; }, desc: "수익성 +1" },
+      { name: "🇺🇸 미국", cost: 35000, unlocked: false, successRate: 0.45, bonus: () => { speedBonus += 0.5; }, desc: "수익 속도 +50%" }
+    ];
 
-function updateCountries() {
-      const list = document.getElementById("country-list");
+    function updateCountries() {
+      const ul = document.getElementById("country-list");
       const bonusDiv = document.getElementById("bonuses");
-      list.innerHTML = "";
-      let bonusText = "";
-
-      countries.forEach((c) => {
-        const li = document.createElement("li");
-        li.textContent = `${c.name} - ${c.unlocked ? "✅ 정복 완료" : `🔒 ${c.cost.toFixed(3)} BTC / 성공률 ${(c.successRate * 100).toFixed(0)}%`}`;
-        if (!c.unlocked && btc >= c.cost) {
-          const btn = document.createElement("button");
-          btn.textContent = "정복!";
-          btn.onclick = () => {
-            btc -= c.cost;
-            const success = Math.random() < c.successRate;
-            if (success) {
-              c.unlocked = true;
-              updateDisplay(`[${new Date().toLocaleTimeString()}] 🌍 ${c.name} 정복 성공! 보상 적용됨. (보안 방패 적용됨)`);
-              if (c.bonus) c.bonus();
-            } else {
-              const shieldEffect = Math.min(shields * 0.05, 0.3);
-              const loss = c.cost * (1 - shieldEffect);
-              btc += c.cost - loss;
-              updateDisplay(`[${new Date().toLocaleTimeString()}] ❌ ${c.name} 정복 실패. 보안 방패로 손실 ${loss.toFixed(3)} BTC 발생`);
-            }
-            updateCountries();
-          };
-          li.appendChild(btn);
+      ul.innerHTML = "";
+      countries.forEach((c, i) => {
+        if (!c.unlocked) {
+          const li = document.createElement("li");
+          li.innerHTML = `<button class='upgrade-btn' onclick='conquer(${i})'>${c.name} 정복 ($${c.cost}) - ${c.desc}</button>`;
+          ul.appendChild(li);
         }
-        list.appendChild(li);
-        if (c.unlocked) bonusText += `${c.name}: ${c.desc} / `;
       });
-      bonusDiv.textContent = bonusText ? `정복 보상: ${bonusText}` : "";
+      const activeBonuses = countries.filter(c => c.unlocked).map(c => `${c.name}: ${c.desc}`);
+      bonusDiv.innerHTML = activeBonuses.join("<br>");
+    }
+
+    function conquer(index) {
+      const c = countries[index];
+      if (c.unlocked) return;
+      if (btc >= c.cost) {
+        btc -= c.cost;
+        const roll = Math.random();
+        const reducedLoss = shields > 0 ? c.cost * 0.3 : 0;
+        if (roll <= c.successRate) {
+          c.unlocked = true;
+          c.bonus();
+          updateDisplay(`🌍 ${c.name} 정복 완료! 특별 혜택 적용됨.`);
+          if (countries.every(country => country.unlocked)) {
+            updateDisplay(`
+██    ██ ██ ████████  ██████  ██████  ██    ██
+██    ██ ██    ██    ██    ██ ██   ██  ██  ██ 
+██    ██ ██    ██    ██    ██ ██████    ████  
+ ██  ██  ██    ██    ██    ██ ██   ██    ██   
+  ████   ██    ██     ██████  ██   ██    ██   
+🎉 전 세계 정복 완료! 축하합니다!`);
+          }
+        } else {
+          btc += reducedLoss;
+          updateDisplay(`❌ ${c.name} 정복 실패. 보안 덕분에 손실 일부 방지됨.`);
+        }
+        updateCountries();
+      }
     }
 
     setInterval(() => {
-      const hacked = hackers * 0.000001;
-      if (hacked > 0) {
-        btc += hacked;
-        updateDisplay(`[${new Date().toLocaleTimeString()}] 💻 해커 자동 수급: ${hacked.toFixed(8)} BTC`);
+      if (hackers > 0) {
+        const autoEarn = hackers * speedBonus;
+        btc += autoEarn;
+        updateDisplay(`💰 자동 수익 발생: +$${autoEarn.toFixed(2)}`);
       }
     }, 5000);
 
+    setInterval(() => {
+      const now = new Date();
+      const clock = document.getElementById("clock");
+      clock.textContent = now.toLocaleTimeString();
+    }, 1000);
+
     updateCountries();
-  setInterval(() => {
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString();
-  document.getElementById("clock").textContent = `🕒 ${timeStr}`;
-}, 1000);
-
-</script>
-  
-<div id="ad-sidebar">
-  <ins class="kakao_ad_area" style="display:none;"
-       data-ad-unit="DAN-SfSPhXE1BKrKdzYH"
-       data-ad-width="160"
-       data-ad-height="600"></ins>
-</div>
-<script type="text/javascript" src="//t1.daumcdn.net/kas/static/ba.min.js" async></script>
-
-<div id="ad-leftbar">
-  <ins class="kakao_ad_area" style="display:none;"
-       data-ad-unit="DAN-88QFaw1snRpFGSJz"
-       data-ad-width="160"
-       data-ad-height="600"></ins>
-</div>
-
-  
+  </script>
 </body>
 </html>
